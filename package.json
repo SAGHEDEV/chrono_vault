@@ -11,7 +11,9 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@mysten/dapp-kit": "^0.18.0",
+    "@mysten/signers": "^0.5.0",
     "@mysten/sui": "^1.38.0",
+    "@mysten/walrus": "^0.7.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-popover": "^1.1.15",

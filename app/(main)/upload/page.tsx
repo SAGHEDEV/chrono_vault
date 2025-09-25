@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDownIcon, Plus, Trash2 } from "lucide-react";
 import { FaFileUpload } from "react-icons/fa";
+import SuccessModal from "@/components/miscellaneous/SuccessModal";
+import { useUploadToWalrus } from "@/hooks/useUploadToWalrus";
 
 // -------------------------
 // ✅ Zod Schema
@@ -31,13 +33,13 @@ const vaultSchema = z.object({
         ? "Please select an unlock date"
         : "Invalid date",
   }),
-  accessAddresses: z
-    .array(
+  accessAddresses: z.optional(
+    z.array(
       z.object({
         address: z.string().min(1, "Address cannot be empty"),
       })
     )
-    .optional(),
+  ),
   files: z.array(z.custom<File>()).min(1, "You must upload at least one file"),
 });
 
@@ -47,6 +49,9 @@ export default function UploadSection() {
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState("12:00"); // ✅ time state
   const [open, setOpen] = useState(false);
+  const [openSuccess, setOpenSuccess] = useState(false);
+  const { mutate: uploadFilesToWalrus, isPending: uploadLoading } =
+    useUploadToWalrus();
 
   const {
     register,
@@ -58,7 +63,7 @@ export default function UploadSection() {
   } = useForm<VaultFormValues>({
     resolver: zodResolver(vaultSchema),
     defaultValues: {
-      accessAddresses: [{ address: "" }],
+      accessAddresses: [],
       files: [],
     },
   });
@@ -91,7 +96,10 @@ export default function UploadSection() {
       ...data,
       unlockDate: data.unlockDate.toISOString(),
     });
-    // TODO: Upload files to Walrus + Seal + Save metadata
+    try {
+      const blobs = data.files;
+      uploadFilesToWalrus(blobs);
+    } catch {}
   };
 
   return (
@@ -239,7 +247,9 @@ export default function UploadSection() {
                         combined.setHours(parseInt(hh, 10));
                         combined.setMinutes(parseInt(mm, 10));
                         combined.setSeconds(0);
-                        setValue("unlockDate", combined, { shouldValidate: true });
+                        setValue("unlockDate", combined, {
+                          shouldValidate: true,
+                        });
                       }
                       setOpen(false);
                     }}
@@ -324,11 +334,19 @@ export default function UploadSection() {
           <button
             type="submit"
             className="w-full bg-black hover:bg-gray-700 text-white font-medium px-5 py-2 rounded-md cursor-pointer active:scale-95 transition"
+            disabled={uploadLoading}
           >
-            Upload & Seal Vault
+            {uploadLoading ? "Uploading..." : "Upload & Seal Vault"}
           </button>
         </div>
       </form>
+
+      <SuccessModal
+        open={openSuccess}
+        onClose={() => setOpenSuccess(false)}
+        vaultName={"Test Name"}
+        walrusCid="0x0jdjdjsjhsndjieieiei"
+      />
     </div>
   );
 }
