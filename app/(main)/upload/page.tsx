@@ -17,6 +17,7 @@ import { ChevronDownIcon, Plus, Trash2 } from "lucide-react";
 import { FaFileUpload } from "react-icons/fa";
 import SuccessModal from "@/components/miscellaneous/SuccessModal";
 import { useUploadToWalrus } from "@/hooks/useUploadToWalrus";
+import DemoSeal from "@/components/miscellaneous/TestSealEncrypt";
 
 // -------------------------
 // ✅ Zod Schema
@@ -36,7 +37,13 @@ const vaultSchema = z.object({
   accessAddresses: z.optional(
     z.array(
       z.object({
-        address: z.string().min(1, "Address cannot be empty"),
+        address: z
+          .string()
+          .min(1, "Address cannot be empty")
+          .refine((val) => val.startsWith("0x") || val.startsWith("@"), {
+            message:
+              "Addresses can only start with 0x or start with an @ sign for a Sui NS name",
+          }),
       })
     )
   ),
@@ -98,7 +105,8 @@ export default function UploadSection() {
     });
     try {
       const blobs = data.files;
-      uploadFilesToWalrus(blobs);
+      const blobIds = await uploadFilesToWalrus({ files: blobs, vaultName: data.title });
+      console.log(blobIds)
     } catch {}
   };
 
@@ -114,10 +122,10 @@ export default function UploadSection() {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-gray-800 border p-4 rounded-2xl"
+        className="flex flex-col lg:flex-row justify-between gap-8 text-gray-800 border p-4 rounded-2xl"
       >
         {/* ---------- LEFT: File Upload + Details ---------- */}
-        <div className="flex flex-col space-y-6">
+        <div className="w-full flex flex-col space-y-6">
           {/* Vault Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -210,7 +218,7 @@ export default function UploadSection() {
         </div>
 
         {/* ---------- RIGHT: Time-Lock + Access Control ---------- */}
-        <div className="flex flex-col space-y-6 p-4 rounded-xl border">
+        <div className="w-full flex flex-col space-y-6 p-4 rounded-xl border">
           <h3 className="text-xl font-bold text-black">Vault Lock Settings</h3>
 
           {/* Unlock Date Picker + Time Picker */}
@@ -315,7 +323,9 @@ export default function UploadSection() {
               </div>
             ))}
             <p className="text-xs text-gray-600">
-              These addresses will be the only ones allowed to access the vault.
+              These addresses will be the only ones allowed to access the vault.{" "}
+              <br /> Note that you can reference a users Sui NS by adding the
+              '@' sign to the front of the NS.
             </p>
             <Button
               type="button"
@@ -340,7 +350,6 @@ export default function UploadSection() {
           </button>
         </div>
       </form>
-
       <SuccessModal
         open={openSuccess}
         onClose={() => setOpenSuccess(false)}

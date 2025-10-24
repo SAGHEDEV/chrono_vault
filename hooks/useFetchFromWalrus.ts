@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { WalrusClient } from "@mysten/walrus";
+import { WalrusClient, WalrusFile, WalrusBlob } from "@mysten/walrus";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 
-// setup client once
-
+// Setup client once
 const suiClient = new SuiClient({
 	url: getFullnodeUrl('testnet'),
 });
@@ -13,16 +12,31 @@ const walrusClient = new WalrusClient({
 	suiClient,
 });
 
-export const useFetchFromWalrus = (blobId?: string) => {
-  return useQuery({
-    queryKey: ["walrus-blob", blobId],
-    enabled: !!blobId,
+export const useFetchFromWalrus = (params: { blobId?: string, identifier?: string }) => {
+  return useQuery<WalrusFile[] | null, Error>({
+    queryKey: ["walrus-quilt-file", params.blobId, params.identifier],
+    enabled: !!params.blobId, // Only need blobId to fetch the quilt
     queryFn: async () => {
-      if (!blobId) throw new Error("BlobId is required");
+      const { blobId, identifier } = params;
 
+      if (!blobId) {
+        throw new Error("Quilt ID is required.");
+      }
+      
       try {
-        const blob =await walrusClient.getBlob({ blobId });
-        return blob;
+        // First, get the entire quilt as a WalrusBlob
+        const walrusBlob = await walrusClient.getBlob({ blobId });
+        
+        // If an identifier was provided, filter the files
+        if (identifier) {
+          const files = await walrusBlob.files({ identifiers: [identifier] });
+          return files;
+        }
+
+        // If no identifier was provided, return all files in the quilt
+        const allFiles = await walrusBlob.files();
+        return allFiles;
+
       } catch (err: any) {
         console.error("Walrus fetch failed:", err);
         throw new Error(
