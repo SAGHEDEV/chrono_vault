@@ -15,16 +15,16 @@ function LaunchAppBtn() {
       <button
         onClick={() => {
           if (currentAccount) {
-            router.push("/dashboard");
+            router.push("/create-account");
           } else {
             setIsModalOpen(true);
           }
         }}
-        className=" py-3 bg-black text-white rounded-full hover:scale-105 transition duration-300 active:scale-95 cursor-pointer flex gap-4 items-center justify-center min-w-[280px] hover:shadow-2xl"
+        className="py-2 px-8 bg-[#1A73E8] text-white brutalist-btn flex gap-4 items-center justify-center min-w-[320px] font-black text-lg cursor-pointer"
       >
         Launch App{" "}
-        <span className="rounded-full bg-white text-black p-2 transition duration-300">
-          <FaArrowRight size={16} />
+        <span className="bg-[#4FC3F7] text-[#0A0A0A] p-3 brutalist-border rounded-full">
+          <FaArrowRight size={20} />
         </span>
       </button>
       <ConnectWalletModal open={isModalOpen} setOpen={setIsModalOpen} />

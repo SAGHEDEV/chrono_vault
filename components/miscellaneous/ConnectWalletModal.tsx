@@ -22,18 +22,18 @@ function ConnectWalletModal({
   return (
     <div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
-          <DialogTitle className="w-= h-0" />
-          <div className="flex flex-col items-center justify-center gap-4">
+        <DialogContent className="sm:max-w-md brutalist-card p-8 border-2">
+          <DialogTitle className="w-0 h-0 hidden" />
+          <div className="flex flex-col items-center justify-center gap-6">
             <div>
-              <h3 className="text-3xl font-bold text-center">Connect Wallet!</h3>
-              <p className="text-sm text-gray-600 text-center mt-1">
+              <h3 className="text-3xl font-black text-center uppercase text-[#0A0A0A]">Connect Wallet!</h3>
+              <p className="text-sm text-[#0A0A0A] font-bold text-center mt-2">
                 Your wallet has to be connected to proceed to launch the
                 application.
               </p>
             </div>
             <div className="w-full">
-              <div className="w-full flex flex-col gap-2 mt-4">
+              <div className="w-full flex flex-col gap-3 mt-4">
                 {Array.isArray(wallets) && wallets.length !== 0 ? wallets.map((wallet) => (
                   <Button
                     key={wallet.name}
@@ -41,36 +41,36 @@ function ConnectWalletModal({
                       handleConnectWallet(
                         { wallet },
                         {
-                          onSuccess: () => router.push("/dashboard"),
+                          onSuccess: () => router.push("/create-account"),
                         }
                       );
                     }}
-                    className="w-full border bg-white cursor-pointer text-black h-10 hover:bg-gray-100 active:scale-95 transition duration-300 flex items-center gap-3"
+                    className="w-full brutalist-btn bg-white text-[#0A0A0A] h-12 hover:bg-[#4FC3F7] hover:translate-x-1 transition-all flex items-center gap-3 border-2 shadow-[4px_4px_0px_#0A0A0A] cursor-pointer"
                   >
                     <Image
                       src={wallet.icon}
                       alt={wallet.name}
-                      width={20}
-                      height={20}
+                      width={24}
+                      height={24}
                     />
-                    Connect {wallet.name} Wallet
+                    CONNECT {wallet.name.toUpperCase()} WALLET
                   </Button>
-                )) : <p className="text-sm text-center text-gray-600 font-semibold">No wallet was found! Install a wallet to continue </p>}
+                )) : <p className="text-sm text-center text-[#0A0A0A] font-bold">No wallet was found! Install a wallet to continue </p>}
 
-                <div className="w-full flex items-center justify-center gap-3">
-                  <div className="w-full h-0.5 bg-gray-200"></div>
-                  <div className="text-lg font-semibold text-black">or</div>
-                  <div className="w-full h-0.5 bg-gray-200"></div>
+                <div className="w-full flex items-center justify-center gap-3 my-2">
+                  <div className="w-full h-0.5 bg-[#0A0A0A]"></div>
+                  <div className="text-lg font-black text-[#0A0A0A] uppercase">or</div>
+                  <div className="w-full h-0.5 bg-[#0A0A0A]"></div>
                 </div>
                 <div className="w-full flex flex-col items-center gap-3">
-                  <Button disabled className="w-full border bg-white cursor-pointer text-black h-10 hover:bg-gray-100 active:scale-95 transition duration-300 flex items-center gap-3">
-                    <FcGoogle size={25} />
-                    Continue with Google
+                  <Button disabled className="w-full brutalist-btn bg-white text-[#0A0A0A] h-12 opacity-50 cursor-not-allowed flex items-center gap-3 border-2 shadow-[4px_4px_0px_#0A0A0A]">
+                    <FcGoogle size={24} />
+                    CONTINUE WITH GOOGLE
                   </Button>
 
-                  <Button disabled className="w-full border bg-white cursor-pointer text-black h-10 hover:bg-gray-100 active:scale-95 transition duration-300 flex items-center gap-3">
-                    <FaFacebook size={25} className="text-blue-500" />
-                    Continue with Facebook
+                  <Button disabled className="w-full brutalist-btn bg-white text-[#0A0A0A] h-12 opacity-50 cursor-not-allowed flex items-center gap-3 border-2 shadow-[4px_4px_0px_#0A0A0A]">
+                    <FaFacebook size={24} className="text-blue-500" />
+                    CONTINUE WITH FACEBOOK
                   </Button>
                 </div>
               </div>

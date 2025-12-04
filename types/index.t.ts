@@ -2,6 +2,8 @@ export interface VaultFile {
   id: string;
   name: string;
   size: string;
+  sealId: string;
+  blobId: string;
 }
 
 export interface VaultType {
@@ -12,6 +14,9 @@ export interface VaultType {
   unlockDate: string;
   status: "locked" | "unlocked" | "pending";
   custodyCount: number;
-  walrusCid: string;
   files: VaultFile[];
+  authorizedAddresses: string[];
+  sealIds: string[];
+  blobIds: string[];
+  owner?: string;
 }

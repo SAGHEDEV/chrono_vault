@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const dmSans = DM_Sans({
-   subsets: ["latin"],
+const space_grotesk = Space_Grotesk({
+  subsets: ["latin"],
   weight: [
-    "100",
-    "200",
     "300",
     "400",
     "500",
     "600",
     "700",
-    "800",
-    "900",
   ],
-  style: ["normal", "italic"],
-  variable: "--font-dmsans",
+  style: ["normal"],
+  variable: "--font-space_grotesk",
   display: "swap",
 });
 
@@ -33,10 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} !font-dmsans antialiased`}>
+      <body className={`${space_grotesk.variable} !font-space_grotesk antialiased`}>
         <Providers>
-          <main className="w-screen h-screen p-4 bg-black flex flex-col items-center justify-center">
-            <div className="w-full max-h-full h-full flex-1 bg-white text-black rounded-2xl overflow-y-auto overflow-x-hidden repeated-square-bg-dark">
+          <main className="w-screen h-screen p-4 bg-[#1A73E8] flex flex-col items-center justify-center">
+            <div className="w-full max-h-full h-full flex-1 bg-white text-black border-4 border-black overflow-y-auto overflow-x-hidden repeated-square-bg-dark rounded-2xl">
               {children}
             </div>
           </main>

@@ -5,30 +5,29 @@ interface StatCardProps {
   label: string;
   value: number | string;
   Icon?: ReactNode;
-  accent?: string; // Tailwind color prefix, e.g. "blue", "green"
+  accent?: string; // Hex color for accent
 }
 
 const StatCard: React.FC<StatCardProps> = ({
   label,
   value,
   Icon,
-  accent = "blue",
+  accent = "#1A73E8",
 }) => {
   return (
-    <div className="w-full border border-outline rounded-3xl p-4 flex flex-col gap-2">
-      <div className="flex justify-between gap-10 ">
-        <div className="flex flex-col gap-2 w-fit">
-          <p className="text-gray-600">{label}</p>
-          <p className="text-3xl font-bold text-black">{value}</p>
+    <div className="w-full brutalist-card p-5 flex flex-col gap-3">
+      <div className="flex justify-between items-start gap-4">
+        <div className="flex flex-col gap-1 w-fit">
+          <p className="text-sm font-bold text-[#0A0A0A] uppercase tracking-wide">{label}</p>
+          <p className="text-4xl font-black text-[#0A0A0A]">{value}</p>
         </div>
         <div
-          style={{ color: `${accent}`, backgroundColor: `${accent}1A` }}
-          className="p-2 w-fit h-fit rounded-full bg-gray-200/50 flex items-center justify-center"
+          style={{ backgroundColor: accent }}
+          className="p-3 w-fit h-fit brutalist-border flex items-center justify-center text-white rounded-2xl"
         >
           {Icon}
         </div>
       </div>
-      {/* <div className="max-w-48 xs-text">{description}</div> */}
     </div>
   );
 };

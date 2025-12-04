@@ -13,27 +13,20 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronDownIcon, Plus, Trash2 } from "lucide-react";
+import { ChevronDownIcon, Plus, Trash2, Clock, Lock, AlertCircle } from "lucide-react";
 import { FaFileUpload } from "react-icons/fa";
 import SuccessModal from "@/components/miscellaneous/SuccessModal";
-import { useUploadToWalrus } from "@/hooks/useUploadToWalrus";
-import DemoSeal from "@/components/miscellaneous/TestSealEncrypt";
+import { useCreateVault } from "@/hooks/useCreateVault";
+import ProgressModal from "@/components/miscellaneous/ProgressModal";
 
-// -------------------------
-// ✅ Zod Schema
-// -------------------------
+// Zod Schema
 const vaultSchema = z.object({
   title: z
     .string()
     .min(3, "Vault name must be at least 3 characters")
     .max(100, "Vault name too long"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  unlockDate: z.date({
-    error: (issue) =>
-      issue.input === undefined
-        ? "Please select an unlock date"
-        : "Invalid date",
-  }),
+  unlockDate: z.date().optional(),
   accessAddresses: z.optional(
     z.array(
       z.object({
@@ -48,17 +41,27 @@ const vaultSchema = z.object({
     )
   ),
   files: z.array(z.custom<File>()).min(1, "You must upload at least one file"),
+  enableTimeLock: z.boolean(),
+  enableAccessControl: z.boolean(),
+}).refine((data) => {
+  if (data.enableTimeLock && !data.unlockDate) {
+    return false;
+  }
+  return data.enableTimeLock || data.enableAccessControl;
+}, {
+  message: "You must enable at least one lock type (Time-based or Access-based)",
+  path: ["enableTimeLock"],
 });
 
 type VaultFormValues = z.infer<typeof vaultSchema>;
 
 export default function UploadSection() {
   const [date, setDate] = useState<Date | undefined>();
-  const [time, setTime] = useState("12:00"); // ✅ time state
+  const [time, setTime] = useState("12:00");
   const [open, setOpen] = useState(false);
-  const [openSuccess, setOpenSuccess] = useState(false);
-  const { mutate: uploadFilesToWalrus, isPending: uploadLoading } =
-    useUploadToWalrus();
+  const [openSuccess, setOpenSuccess] = useState<{ open: boolean; id?: string } | null>(null);
+
+  const { createVault, isCreating, progress, error } = useCreateVault();
 
   const {
     register,
@@ -66,12 +69,16 @@ export default function UploadSection() {
     setValue,
     watch,
     control,
+    reset,
     formState: { errors },
+    getValues,
   } = useForm<VaultFormValues>({
     resolver: zodResolver(vaultSchema),
     defaultValues: {
       accessAddresses: [],
       files: [],
+      enableTimeLock: false,
+      enableAccessControl: false,
     },
   });
 
@@ -81,6 +88,8 @@ export default function UploadSection() {
   });
 
   const files = watch("files");
+  const enableTimeLock = watch("enableTimeLock");
+  const enableAccessControl = watch("enableAccessControl");
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -99,262 +108,396 @@ export default function UploadSection() {
   });
 
   const onSubmit = async (data: VaultFormValues) => {
-    console.log("✅ Form Data:", {
-      ...data,
-      unlockDate: data.unlockDate.toISOString(),
-    });
     try {
-      const blobs = data.files;
-      const blobIds = await uploadFilesToWalrus({ files: blobs, vaultName: data.title });
-      console.log(blobIds)
-    } catch {}
+      const vaultDetails = await createVault({
+        files: data.files,
+        vaultName: data.title,
+        description: data.description,
+        unlockTime: data.unlockDate?.getTime(),
+        authorizedAddresses: data.accessAddresses?.map(a => a.address)
+      });
+
+      console.log("✅ Vault created:", vaultDetails);
+      setOpenSuccess({ open: true, id: vaultDetails.vaultId });
+      reset();
+      setDate(undefined);
+      setTime("12:00");
+    } catch (err) {
+      console.error("❌ Error creating vault:", err);
+    }
   };
 
   return (
-    <div className="p-6 flex flex-col gap-6">
-      <div>
-        <h2 className="text-2xl font-bold text-black">Create Vault</h2>
-        <p className="text-gray-600 mt-2">
-          Store multiple files securely with verifiable timestamps and
-          time-locks.
+    <div className="p-6 flex flex-col gap-8">
+      {/* Header */}
+      <div className="brutalist-card p-6">
+        <h2 className="text-3xl font-black text-[#0A0A0A] uppercase">Create Vault</h2>
+        <p className="text-[#0A0A0A] mt-2 font-bold">
+          Store multiple files securely with verifiable timestamps and time-locks.
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col lg:flex-row justify-between gap-8 text-gray-800 border p-4 rounded-2xl"
+        className="w-full flex flex-col gap-8 text-[#0A0A0A] brutalist-card p-6"
       >
-        {/* ---------- LEFT: File Upload + Details ---------- */}
-        <div className="w-full flex flex-col space-y-6">
-          {/* Vault Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Vault Name
-            </label>
-            <input
-              {...register("title")}
-              placeholder="e.g., Graduation Documents Vault"
-              className="w-full rounded-md border border-gray-300 focus:border-gray-500 focus:ring-gray-500 text-sm p-2"
-            />
-            {errors.title && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.title.message}
-              </p>
-            )}
-          </div>
-
-          {/* File Dropzone */}
-          <div
-            {...getRootProps()}
-            className={`w-full border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors flex flex-col gap-3 items-center
-              ${
-                isDragActive
-                  ? "border-gray-700 bg-gray-100"
-                  : "border-gray-400 hover:border-gray-600"
-              }`}
-          >
-            <input {...getInputProps()} />
-            <FaFileUpload size={50} />
-
-            <p className="font-medium text-gray-700 mb-1">
-              Drop files here or click to browse
-            </p>
-            <p className="text-sm text-gray-500">
-              Supports multiple files up to 10 MB each
-            </p>
-          </div>
-          {errors.files && (
-            <p className="text-sm text-red-600 mt-1 text-center">
-              {errors.files.message}
-            </p>
-          )}
-          {files && files.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <p className="font-semibold text-gray-800">Uploaded files:</p>
-              {files.map((f, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col justify-between items-start gap-3 p-2 bg-gray-100 rounded-lg text-sm"
-                >
-                  <p className="font-medium text-gray-700 text-left">
-                    {f.name} ({(f.size / 1024).toFixed(1)} KB)
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = (watch("files") || []).filter(
-                        (_, idx) => idx !== i
-                      );
-                      setValue("files", updated, { shouldValidate: true });
-                    }}
-                    className="w-full py-2 text-red-600 hover:text-red-800 font-semibold text-xs
-                       border border-red-300 hover:border-red-500
-                       transition-colors rounded-md"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              {...register("description")}
-              placeholder="Add a description for this vault..."
-              className="w-full rounded-md border min-h-[120px] border-gray-300 focus:border-gray-500 focus:ring-gray-500 text-sm p-2"
-            />
-            {errors.description && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* ---------- RIGHT: Time-Lock + Access Control ---------- */}
-        <div className="w-full flex flex-col space-y-6 p-4 rounded-xl border">
-          <h3 className="text-xl font-bold text-black">Vault Lock Settings</h3>
-
-          {/* Unlock Date Picker + Time Picker */}
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <label htmlFor="date" className="px-1 text-sm">
-                Set Unlock Date:
+        <div className="w-full flex flex-col lg:flex-row justify-between gap-8">
+          {/* LEFT: File Upload + Details */}
+          <div className="w-full flex flex-col space-y-6">
+            {/* Vault Title */}
+            <div>
+              <label className="block text-sm font-black text-[#0A0A0A] mb-2 uppercase tracking-wide">
+                Vault Name
               </label>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    id="date"
-                    className="justify-between font-normal"
-                  >
-                    {date ? date.toLocaleDateString() : "Select date"}
-                    <ChevronDownIcon className="w-4 h-4 ml-2" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto overflow-hidden p-0"
-                  align="start"
-                >
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    captionLayout="dropdown"
-                    onSelect={(d) => {
-                      setDate(d);
-                      // Combine with time if already set
-                      if (d) {
-                        const [hh, mm] = time.split(":");
-                        const combined = new Date(d);
-                        combined.setHours(parseInt(hh, 10));
-                        combined.setMinutes(parseInt(mm, 10));
-                        combined.setSeconds(0);
-                        setValue("unlockDate", combined, {
-                          shouldValidate: true,
-                        });
-                      }
-                      setOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-              {errors.unlockDate && (
-                <p className="text-sm text-red-600 mt-1">
-                  {errors.unlockDate.message}
+              <input
+                {...register("title")}
+                placeholder="GRADUATION DOCUMENTS VAULT"
+                className="w-full brutalist-border focus:outline-none text-sm p-3 font-bold placeholder:text-gray-400 uppercase rounded-2xl"
+                disabled={isCreating}
+              />
+              {errors.title && (
+                <p className="text-sm text-[#FF3B30] mt-2 font-bold">
+                  {errors.title.message}
                 </p>
               )}
             </div>
 
-            {/* ✅ Time Picker */}
-            <div className="flex flex-col gap-3">
-              <label htmlFor="time-picker" className="px-1 text-sm">
-                Set Unlock Time:
+            {/* File Dropzone */}
+            <div
+              {...getRootProps()}
+              className={`w-full brutalist-border-thick p-10 text-center cursor-pointer transition-all flex flex-col gap-4 items-center rounded-2xl
+                ${isCreating ? 'opacity-50 cursor-not-allowed' : ''}
+                ${isDragActive
+                  ? "bg-[#4FC3F7]"
+                  : "bg-white hover:bg-[#F5F5F5]"
+                }`}
+            >
+              <input {...getInputProps()} disabled={isCreating} />
+              <FaFileUpload size={60} className={isCreating ? 'text-gray-400' : 'text-[#0A0A0A]'} />
+
+              <p className="font-black text-[#0A0A0A] uppercase text-lg">
+                Drop files here or click to browse
+              </p>
+              <p className="text-sm text-[#0A0A0A] font-bold">
+                Supports multiple files up to 10 MB each
+              </p>
+            </div>
+            {errors.files && (
+              <p className="text-sm text-[#FF3B30] mt-2 text-center font-bold">
+                {errors.files.message}
+              </p>
+            )}
+            {files && files.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <p className="font-black text-[#0A0A0A] uppercase">Uploaded files:</p>
+                {files.map((f, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col justify-between items-start gap-3 p-4 brutalist-card rounded-2xl"
+                  >
+                    <p className="font-bold text-[#0A0A0A] text-left uppercase text-sm">
+                      {f.name} ({(f.size / 1024).toFixed(1)} KB)
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (watch("files") || []).filter(
+                          (_, idx) => idx !== i
+                        );
+                        setValue("files", updated, { shouldValidate: true });
+                      }}
+                      disabled={isCreating}
+                      className="w-full py-2 px-4 bg-[#FF3B30] text-white font-black uppercase text-xs brutalist-border hover:translate-x-1 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-black text-[#0A0A0A] mb-2 uppercase tracking-wide">
+                Description
               </label>
-              <input
-                id="time-picker"
-                type="time"
-                step="60" // minute increments
-                value={time}
-                onChange={(e) => {
-                  const t = e.target.value;
-                  setTime(t);
-                  if (date) {
-                    const [hh, mm] = t.split(":");
-                    const combined = new Date(date);
-                    combined.setHours(parseInt(hh, 10));
-                    combined.setMinutes(parseInt(mm, 10));
-                    combined.setSeconds(0);
-                    setValue("unlockDate", combined, { shouldValidate: true });
-                  }
-                }}
-                className="rounded-md border border-gray-300 focus:border-gray-500 focus:ring-gray-500 text-sm p-2 bg-background"
+              <textarea
+                {...register("description")}
+                placeholder="ADD A DESCRIPTION FOR THIS VAULT..."
+                className="w-full brutalist-border min-h-[120px] focus:outline-none text-sm p-3 font-bold placeholder:text-gray-400 uppercase rounded-2xl"
+                disabled={isCreating}
               />
+              {errors.description && (
+                <p className="text-sm text-[#FF3B30] mt-2 font-bold">
+                  {errors.description.message}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Dynamic Access Addresses */}
-          <div className="flex flex-col gap-3">
-            <label className="block text-sm font-medium text-gray-700">
-              Access Addresses (Optional)
-            </label>
-            {fields.map((field, index) => (
-              <div key={field.id} className="flex items-center gap-2">
-                <input
-                  {...register(`accessAddresses.${index}.address` as const)}
-                  placeholder="0x1234... (wallet address)"
-                  className="flex-1 rounded-md border border-gray-300 focus:border-gray-500 focus:ring-gray-500 text-sm p-2"
-                />
-                {fields.length > 1 && (
+          {/* RIGHT: Encryption Settings */}
+          <div className="w-full flex flex-col space-y-6 p-6 brutalist-card bg-[#F5F5F5]">
+            <h3 className="text-2xl font-black text-[#0A0A0A] uppercase">Encryption Settings</h3>
+
+            {/* Encryption Type Toggles */}
+            <div className="space-y-4">
+              {/* Time-Based Lock Toggle */}
+              <div className="flex items-center justify-between p-4 bg-white brutalist-border hover:bg-[#4FC3F7] transition-colors rounded-2xl">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="p-3 bg-[#1A73E8] brutalist-border rounded-2xl">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-black text-[#0A0A0A] cursor-pointer block uppercase">
+                      Time-Based Lock
+                    </label>
+                    <p className="text-xs text-[#0A0A0A] mt-1 font-bold">
+                      Automatically unlock vault at a specific date and time
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={enableTimeLock}
+                  onClick={() => setValue("enableTimeLock", !enableTimeLock, { shouldValidate: true })}
+                  disabled={isCreating}
+                  className={`relative inline-flex h-8 w-14 items-center brutalist-border transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl cursor-pointer ${enableTimeLock ? "bg-[#1A73E8]" : "bg-white"
+                    }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform bg-[#4FC3F7] brutalist-border transition-transform rounded-full ${enableTimeLock ? "translate-x-7" : "translate-x-1"
+                      }`}
+                  />
+                </button>
+              </div>
+
+              {/* Access-Based Lock Toggle */}
+              <div className="flex items-center justify-between p-4 bg-white brutalist-border hover:bg-[#4FC3F7] transition-colors rounded-2xl">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="p-3 bg-[#1A73E8] brutalist-border rounded-2xl">
+                    <Lock className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-black text-[#0A0A0A] cursor-pointer block uppercase">
+                      Access-Based Control
+                    </label>
+                    <p className="text-xs text-[#0A0A0A] mt-1 font-bold">
+                      Restrict vault access to specific wallet addresses
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={enableAccessControl}
+                  onClick={() => setValue("enableAccessControl", !enableAccessControl, { shouldValidate: true })}
+                  disabled={isCreating}
+                  className={`relative inline-flex h-8 w-14 items-center brutalist-border transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl cursor-pointer ${enableAccessControl ? "bg-[#1A73E8]" : "bg-white"
+                    }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform bg-[#4FC3F7] brutalist-border transition-transform rounded-full ${enableAccessControl ? "translate-x-7" : "translate-x-1"
+                      }`}
+                  />
+                </button>
+              </div>
+
+              {/* Validation Error */}
+              {errors.enableTimeLock && (
+                <p className="text-sm text-[#FF3B30] px-2 font-bold">
+                  {errors.enableTimeLock.message}
+                </p>
+              )}
+            </div>
+
+            {/* Divider */}
+            {(enableTimeLock || enableAccessControl) && (
+              <div className="border-t-4 border-[#0A0A0A]"></div>
+            )}
+
+            {/* Time Lock Settings */}
+            {enableTimeLock && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-black text-[#0A0A0A] flex items-center gap-2 uppercase">
+                  <Clock className="w-4 h-4" />
+                  Time Lock Configuration
+                </h4>
+
+                <div className="flex flex-col gap-4 bg-white p-4 brutalist-border rounded-2xl">
+                  <div className="flex flex-col gap-3">
+                    <label htmlFor="date" className="text-sm font-black text-[#0A0A0A] uppercase">
+                      Unlock Date
+                    </label>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          id="date"
+                          className="justify-between font-bold brutalist-border uppercase rounded-2xl !p-3 cursor-pointer h-[46px]"
+                          disabled={isCreating}
+                        >
+                          {date ? date.toLocaleDateString() : "Select date"}
+                          <ChevronDownIcon className="w-4 h-4 ml-2" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto overflow-hidden p-0 brutalist-border brutalist-shadow-sm"
+                        align="start"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          captionLayout="dropdown"
+                          onSelect={(d) => {
+                            setDate(d);
+                            if (d) {
+                              const [hh, mm] = time.split(":");
+                              const combined = new Date(d);
+                              combined.setHours(parseInt(hh, 10));
+                              combined.setMinutes(parseInt(mm, 10));
+                              combined.setSeconds(0);
+                              setValue("unlockDate", combined, {
+                                shouldValidate: true,
+                              });
+                            }
+                            setOpen(false);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <label htmlFor="time-picker" className="text-sm font-black text-[#0A0A0A] uppercase">
+                      Unlock Time
+                    </label>
+                    <input
+                      id="time-picker"
+                      type="time"
+                      step="60"
+                      value={time}
+                      onChange={(e) => {
+                        const t = e.target.value;
+                        setTime(t);
+                        if (date) {
+                          const [hh, mm] = t.split(":");
+                          const combined = new Date(date);
+                          combined.setHours(parseInt(hh, 10));
+                          combined.setMinutes(parseInt(mm, 10));
+                          combined.setSeconds(0);
+                          setValue("unlockDate", combined, { shouldValidate: true });
+                        }
+                      }}
+                      disabled={isCreating}
+                      className="brutalist-border focus:outline-none text-sm p-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed uppercase rounded-2xl"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Access Control Settings */}
+            {enableAccessControl && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-black text-[#0A0A0A] flex items-center gap-2 uppercase">
+                  <Lock className="w-4 h-4" />
+                  Access Control Configuration
+                </h4>
+
+                <div className="flex flex-col gap-3 bg-white p-4 brutalist-border rounded-2xl">
+                  <label className="text-sm font-black text-[#0A0A0A] uppercase">
+                    Authorized Addresses
+                  </label>
+
+                  {fields.length === 0 ? (
+                    <p className="text-xs text-[#0A0A0A] font-bold">
+                      No addresses added yet. Click below to add authorized wallets.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                          <input
+                            {...register(`accessAddresses.${index}.address` as const)}
+                            placeholder="0X1234... OR @USERNAME.SUI"
+                            className="flex-1 brutalist-border focus:outline-none text-sm p-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed uppercase placeholder:text-gray-400 rounded-2xl"
+                            disabled={isCreating}
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => remove(index)}
+                            disabled={isCreating}
+                            className="brutalist-border p-3 rounded-full cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-[#0A0A0A] font-bold">
+                    Only these addresses can access the vault. Use 0x prefix for wallet addresses or @ for Sui NS names.
+                  </p>
+
                   <Button
                     type="button"
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => remove(index)}
+                    variant="secondary"
+                    className="flex items-center gap-2 brutalist-btn bg-[#1A73E8] text-white font-black uppercase cursor-pointer"
+                    onClick={() => append({ address: "" })}
+                    disabled={isCreating}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Plus className="w-4 h-4" />
+                    Add Address
                   </Button>
-                )}
+                </div>
               </div>
-            ))}
-            <p className="text-xs text-gray-600">
-              These addresses will be the only ones allowed to access the vault.{" "}
-              <br /> Note that you can reference a users Sui NS by adding the
-              '@' sign to the front of the NS.
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-2 flex items-center gap-1"
-              onClick={() => append({ address: "" })}
-            >
-              <Plus className="w-4 h-4" />
-              Add Address
-            </Button>
+            )}
           </div>
         </div>
 
-        {/* ---------- Submit ---------- */}
-        <div className="w-full flex justify-end col-span-2">
+        {/* Submit Button */}
+        <div className="w-full flex justify-end">
           <button
             type="submit"
-            className="w-full bg-black hover:bg-gray-700 text-white font-medium px-5 py-2 rounded-md cursor-pointer active:scale-95 transition"
-            disabled={uploadLoading}
+            className="w-full bg-[#1A73E8] hover:bg-[#0B2A4A] text-white font-black px-6 py-4 brutalist-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed uppercase text-lg"
+            disabled={isCreating}
           >
-            {uploadLoading ? "Uploading..." : "Upload & Seal Vault"}
+            {isCreating ? "Processing..." : "Upload & Seal Vault"}
           </button>
         </div>
       </form>
+
+      {/* Error Display */}
+      {error && !isCreating && (
+        <div className="brutalist-card bg-[#FF3B30] p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-6 h-6 text-white flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-black text-white mb-2 uppercase">
+                Upload Failed
+              </h3>
+              <p className="text-sm text-white font-bold">
+                {error.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Progress Modal */}
+      <ProgressModal open={isCreating} progress={progress} />
+
+      {/* Success Modal */}
       <SuccessModal
-        open={openSuccess}
-        onClose={() => setOpenSuccess(false)}
-        vaultName={"Test Name"}
-        walrusCid="0x0jdjdjsjhsndjieieiei"
+        open={openSuccess?.open ?? false}
+        onClose={() => setOpenSuccess(null)}
+        vaultName={getValues().title ?? "Your Vault"}
+        vaultId={openSuccess?.id ?? ""}
       />
     </div>
   );

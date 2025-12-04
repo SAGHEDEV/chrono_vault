@@ -8,26 +8,26 @@ function SideBar() {
   const pathname = usePathname();
   const navItems = [
     { name: "Dashboard", href: "/dashboard" },
-    { name: "Valults", href: "/vaults" },
+    { name: "Vaults", href: "/vaults" },
     { name: "Create Vault", href: "/upload" },
   ];
   return (
-    <div className="w-full max-w-[240px] bg-white border border-border shadow-lg rounded-xl p-4 py-6">
-      <div className="flex flex-col gap-7">
-        <div className="pb-5 border-b border-border">
-        <Logo size={15} />
+    <div className="w-full max-w-[260px] bg-white brutalist-border p-6 rounded-2xl">
+      <div className="flex flex-col gap-8">
+        <div className="pb-6 border-b-4 border-[#0A0A0A]">
+          <Logo size={15} />
 
         </div>
-        <nav className="space-y-2">
+        <nav className="space-y-3">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "block p-3 font-medium rounded-lg transition active:scale-95",
+                "block p-4 font-black uppercase text-sm tracking-wide brutalist-border transition-all rounded-2xl",
                 pathname === item.href
-                  ? "bg-black text-white hover:bg-gray-700"
-                  : "hover:bg-gray-100"
+                  ? "bg-[#1A73E8] text-white brutalist-shadow-sm"
+                  : "bg-white hover:bg-[#4FC3F7] hover:translate-x-1"
               )}
             >
               {item.name}

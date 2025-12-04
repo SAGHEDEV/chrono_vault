@@ -24,10 +24,10 @@ export default function DashboardLayout({
   }, [account]);
 
   return (
-    <div className="w-full h-full flex-1 flex gap-4 p-6">
+    <div className="w-full h-full flex-1 flex gap-6 p-6">
       <SideBar />
       {/* Main content */}
-      <main className="flex-1 w-full h-full max-h-full overflow-auto bg-white border border-border rounded-xl p-4 flex flex-col shadow-lg">
+      <main className="flex-1 w-full h-full max-h-full overflow-auto bg-[#F5F5F5] brutalist-border p-6 flex flex-col rounded-full">
         <Header />
         {children}
       </main>
