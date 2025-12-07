@@ -27,7 +27,7 @@ export default function DashboardLayout({
     <div className="w-full h-full flex-1 flex gap-6 p-6">
       <SideBar />
       {/* Main content */}
-      <main className="flex-1 w-full h-full max-h-full overflow-auto bg-[#F5F5F5] brutalist-border p-6 flex flex-col rounded-full">
+      <main className="flex-1 w-full h-full max-h-full overflow-auto bg-[#F5F5F5] brutalist-border p-6 flex flex-col rounded-2xl">
         <Header />
         {children}
       </main>

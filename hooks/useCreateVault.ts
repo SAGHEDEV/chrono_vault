@@ -19,6 +19,7 @@ import {
     getSealConfig,
     getWalrusConfig,
 } from '@/config/vault-config';
+import { file } from 'zod';
 
 // Types
 interface CreateVaultParams {
@@ -188,7 +189,7 @@ export function useCreateVault() {
                     const fileIdBytes = new TextEncoder().encode(fileId);
 
                     const { encryptedObject, key: sealId } = await sealClient.encrypt({
-                        threshold: 2,
+                        threshold: 1,
                         packageId: VAULT_PACKAGE_ID,
                         id: uint8ArrayToHex(bcs.vector(bcs.u8()).serialize(fileIdBytes).toBytes()),
                         data: fileData,
@@ -236,6 +237,11 @@ export function useCreateVault() {
             console.log("📦 Registered blobs with transaction:", digest);
 
             // Upload to Walrus
+            updateProgress({
+                stage: 'uploading',
+                message: `Uploading to Walrus...`,
+                percentage: 60,
+            });
             await flow.upload({ digest });
             console.log("✅ Uploaded to Walrus nodes");
 
@@ -282,7 +288,7 @@ export function useCreateVault() {
             tx.moveCall({
                 target: `${VAULT_PACKAGE_ID}::vault_access::create_vault`,
                 arguments: [
-                    tx.object(ACCOUNT_ROOT_ID),
+                    tx.object(VAULT_REGISTRY_ID),
                     tx.pure.u64(unlockTimeValue),
                     tx.pure.vector('address', resolvedAddresses),
                     tx.pure.vector('vector<u8>', sealIdsForMove),

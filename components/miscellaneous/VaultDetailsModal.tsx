@@ -23,6 +23,7 @@ import {
     Info,
     Database,
     Key,
+    Edit,
 } from "lucide-react";
 import { VaultType } from "@/types/index.t";
 import DownloadFileButton from './DownloadFileButton';
@@ -84,19 +85,8 @@ const VaultDetailsModal: React.FC<VaultDetailsModalProps> = ({
             return null;
         }
 
-        const now = Date.now();
-        const unlockTime = Date.parse(vault.unlockDate);
-        const diff = unlockTime - now;
 
-        if (diff <= 0) return "Unlocked";
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-        if (days > 0) return `${days}d ${hours}h`;
-        if (hours > 0) return `${hours}h ${minutes}m`;
-        return `${minutes}m`;
+        return vault.unlockDate;
     };
 
     const timeUntilUnlock = getTimeUntilUnlock();
@@ -108,7 +98,7 @@ const VaultDetailsModal: React.FC<VaultDetailsModalProps> = ({
         return (
             <div className="space-y-4">
                 <div className="brutalist-border rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(10,10,10,1)]">
-                    <div className="bg-[#1A73E8] px-4 py-3 border-b-4 border-black">
+                    <div className="bg-[#1A73E8] px-4 py-3 border-b-3 border-black">
                         <h3 className="font-black text-white uppercase flex items-center gap-2 tracking-wide">
                             <File className="w-5 h-5" />
                             Files in Vault
@@ -188,7 +178,7 @@ const VaultDetailsModal: React.FC<VaultDetailsModalProps> = ({
                                     {vault.status === "unlocked" && (
                                         <DownloadFileButton
                                             sealId={file.sealId}
-                                            vaultId={file.id}
+                                            vaultId={vault.id}
                                             quiltId={file.blobId}
                                             identifier={file.name}
                                         />
@@ -278,7 +268,7 @@ const VaultDetailsModal: React.FC<VaultDetailsModalProps> = ({
 
             {/* Authorized Addresses */}
             <div className="brutalist-border rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(10,10,10,1)]">
-                <div className="bg-[#1A73E8] px-4 py-3 border-b-4 border-black">
+                <div className="bg-[#1A73E8] px-4 py-3 border-b-3 border-black">
                     <div className="flex items-center gap-3">
                         <Users className="w-5 h-5 text-white" />
                         <h3 className="font-black text-white uppercase tracking-wide">
@@ -487,7 +477,7 @@ const VaultDetailsModal: React.FC<VaultDetailsModalProps> = ({
                 </DialogHeader>
 
                 {/* Quick Stats Bar */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-y-4 border-black">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-y-3 border-black">
                     <div className="text-center">
                         <File className="w-5 h-5 mx-auto mb-1 text-[#1A73E8]" />
                         <p className="text-2xl font-black text-[#0A0A0A]">{vault.files.length}</p>
@@ -535,7 +525,7 @@ const VaultDetailsModal: React.FC<VaultDetailsModalProps> = ({
 
                 {/* Tabs - Mobile/Tablet Only */}
                 <div className="mt-4 lg:hidden">
-                    <div className="flex border-b-4 border-black gap-2">
+                    <div className="flex border-b-3 border-black gap-2">
                         <button
                             onClick={() => setActiveTab('files')}
                             className={`px-4 py-3 font-black text-sm uppercase tracking-wide transition-all cursor-pointer rounded-t-2xl ${activeTab === 'files'
@@ -581,9 +571,13 @@ const VaultDetailsModal: React.FC<VaultDetailsModalProps> = ({
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex gap-3 pt-4 border-t-4 border-black">
-                    <Button variant="outline" onClick={onClose} className="flex-1 brutalist-btn rounded-2xl cursor-pointer">
+                <div className="w-full flex gap-3 pt-4 border-t-4 border-black justify-center">
+                    <Button variant="outline" onClick={onClose} className="w-[45%] brutalist-btn rounded-2xl cursor-pointer flex-shrink-1 ">
                         Close
+                    </Button>
+                    <Button className="brutalist-btn rounded-2xl cursor-pointer w-[45%]">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
                     </Button>
                 </div>
             </DialogContent>

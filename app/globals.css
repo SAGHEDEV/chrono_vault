@@ -71,8 +71,8 @@ body {
 }
 
 .repeated-square-bg {
-  background-image: linear-gradient(to right, #E3F2FD 1px, transparent 1px),
-    linear-gradient(to bottom, #E3F2FD 1px, transparent 1px);
+  background-image: linear-gradient(to right, #E3F2FD80 1px, transparent 1px),
+    linear-gradient(to bottom, #E3F2FD80 1px, transparent 1px);
   background-size: 25px 25px;
 }
 
@@ -179,14 +179,13 @@ body {
 
 ::-webkit-scrollbar-track {
   background: transparent;
-  border: 2px solid #0A0A0A;
-  border-radius: 0;
+  border: none;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #1A73E8;
   border: 2px solid #0A0A0A;
-  border-radius: 0;
+  border-radius: 12px;
   box-shadow: 2px 2px 0px #0A0A0A;
 }
 
@@ -201,14 +200,19 @@ body {
 }
 
 ::-webkit-scrollbar-corner {
-  background: #E3F2FD;
-  border: 2px solid #0A0A0A;
+  background: transparent;
+  border: none;
+}
+
+/* Hide scrollbar arrow buttons */
+::-webkit-scrollbar-button {
+  display: none;
 }
 
 /* For Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1A73E8 #E3F2FD;
+  scrollbar-color: #1A73E8 transparent;
 }
 
 /* Custom scrollbar for specific containers */
@@ -218,4 +222,22 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #1A73E8;
+}
+
+/* Scrolling text effects */
+.text-stroke {
+  -webkit-text-stroke: 2px #0A0A0A;
+  text-stroke: 2px #0A0A0A;
+}
+
+.text-stroke-thin {
+  -webkit-text-stroke: 1px #0A0A0A;
+  text-stroke: 1px #0A0A0A;
+}
+
+/* Smooth text rendering */
+.smooth-text {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }

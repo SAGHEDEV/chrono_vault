@@ -41,7 +41,7 @@ function ConnectWalletModal({
                       handleConnectWallet(
                         { wallet },
                         {
-                          onSuccess: () => router.push("/create-account"),
+                          onSuccess: () => router.push("/dashboard"),
                         }
                       );
                     }}

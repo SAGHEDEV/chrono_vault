@@ -15,7 +15,7 @@ function LaunchAppBtn() {
       <button
         onClick={() => {
           if (currentAccount) {
-            router.push("/create-account");
+            router.push("/dashboard");
           } else {
             setIsModalOpen(true);
           }

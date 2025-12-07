@@ -1,3 +1,4 @@
+// import { getAllowlistedKeyServers } from "@mysten/seal";
 /**
  * ChronoVault Configuration
  * 
@@ -34,6 +35,7 @@ export const CLOCK_ID = '0x6';
  * Seal Key Server configurations
  * These are the identity-based encryption key servers
  */
+// const keyServers = getAllowlistedKeyServers(network);
 export const SEAL_CONFIG = {
     testnet: {
         keyServers: [

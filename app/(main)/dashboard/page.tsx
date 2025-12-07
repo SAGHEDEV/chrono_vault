@@ -99,7 +99,7 @@ const VaultDashboard: React.FC = () => {
                   {stats.totalFiles}
                 </p>
               </div>
-              <div className="p-3 bg-[#E3F2FD] brutalist-border">
+              <div className="p-3 bg-[#E3F2FD] brutalist-border rounded-2xl">
                 <BarChart3 className="h-6 w-6 text-[#0A0A0A]" />
               </div>
             </div>
@@ -118,7 +118,7 @@ const VaultDashboard: React.FC = () => {
                       : `${stats.daysUntilNextUnlock} days`}
                 </p>
               </div>
-              <div className="p-3 bg-[#4FC3F7] brutalist-border">
+              <div className="p-3 bg-[#4FC3F7] brutalist-border rounded-2xl">
                 <Clock className="h-6 w-6 text-[#0A0A0A]" />
               </div>
             </div>
@@ -133,7 +133,7 @@ const VaultDashboard: React.FC = () => {
                   {stats.total}
                 </p>
               </div>
-              <div className="p-3 bg-[#0B2A4A] brutalist-border">
+              <div className="p-3 bg-[#0B2A4A] brutalist-border rounded-2xl">
                 <Unlock className="h-6 w-6 text-white" />
               </div>
             </div>

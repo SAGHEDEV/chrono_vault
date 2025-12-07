@@ -14,33 +14,37 @@ export default function SuccessModal({ open, onClose, vaultName, vaultId }: Succ
   const router = useRouter()
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md min-w-[500px] rounded-2xl bg-white dark:bg-gray-900">
-        <DialogHeader className="text-center space-y-2">
-          <CheckCircle2 className="mx-auto h-16 w-16 text-green-600 dark:text-green-400" />
-          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">
+      <DialogContent className="sm:max-w-md min-w-[500px] brutalist-card border-3 border-black shadow-[8px_8px_0px_0px_rgba(26,115,232,1)] bg-white">
+        <DialogHeader className="text-center space-y-4">
+          <div className="mx-auto w-20 h-20 bg-[#4FC3F7] border-3 border-black rounded-2xl flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(10,10,10,1)]">
+            <CheckCircle2 className="h-12 w-12 text-[#0A0A0A]" strokeWidth={3} />
+          </div>
+          <DialogTitle className="text-2xl font-black text-[#0A0A0A] text-center uppercase tracking-wide">
             Vault Created Successfully!
           </DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-400 text-center">
-            Your vault <span className="font-semibold">{vaultName}</span> is live and sealed.
+          <DialogDescription className="text-[#0B2A4A] text-center font-bold text-base">
+            Your vault <span className="font-black text-[#1A73E8]">{vaultName}</span> is live and sealed.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800 text-left text-sm break-all">
-          <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Vault ID:</p>
-          <p className="text-gray-600 dark:text-gray-400 w-full max-w-[280px] md:max-w-[400px] truncate">{vaultId}</p>
+        <div className="mt-4 p-4 border-3 border-black bg-[#E3F2FD] rounded-2xl shadow-[4px_4px_0px_0px_rgba(10,10,10,1)]">
+          <p className="font-black text-[#0A0A0A] mb-2 uppercase text-xs tracking-wide">Vault ID:</p>
+          <p className="text-[#0B2A4A] font-bold text-sm break-all font-mono">{vaultId}</p>
         </div>
 
-        <DialogFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <DialogFooter className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button
             onClick={() => {
               router.push(`https://testnet.suivision.xyz/txblock/${vaultId}`)
             }}
-            variant="outline"
-            className="w-full sm:w-auto text-white hover:text-gray-300 cursor-pointer"
+            className="w-full sm:w-auto brutalist-btn bg-white text-[#0A0A0A] hover:bg-[#E3F2FD] cursor-pointer font-black"
           >
             View on Explorer
           </Button>
-          <Button onClick={onClose} className="w-full sm:w-auto text-white hover:text-gray-300 cursor-pointer">
+          <Button
+            onClick={onClose}
+            className="w-full sm:w-auto brutalist-btn bg-[#1A73E8] text-white hover:bg-[#0B2A4A] cursor-pointer font-black"
+          >
             Close
           </Button>
         </DialogFooter>

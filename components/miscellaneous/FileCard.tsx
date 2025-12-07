@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Lock, Unlock, MoreVertical } from "lucide-react";
+import { Clock, Lock, Unlock, MoreVertical, History } from "lucide-react";
 import {
   FaShareAltSquare,
   FaUsersCog,
@@ -25,10 +25,12 @@ import {
 import ShareLinkModal from "./ShareLinkModal";
 import { VaultType } from "@/types/index.t";
 import VaultDetailsModal from "./VaultDetailsModal";
+import CustodyTrailModal from "./CustodyTrailModal";
 
 function VaultCard({ vault }: { vault: VaultType }) {
   const [openShare, setOpenShare] = useState(false);
   const [viewDetails, setViewDetails] = useState(false);
+  const [openCustodyTrail, setOpenCustodyTrail] = useState(false);
 
   return (
     <Card
@@ -71,7 +73,7 @@ function VaultCard({ vault }: { vault: VaultType }) {
                   variant="outline"
                   className="text-xs border-2 border-black bg-[#1A73E8] text-white font-black uppercase shadow-[4px_4px_0px_0px_rgba(10,10,10,1)] rounded-full"
                 >
-                  {vault.custodyCount} custody
+                  {vault.custodyCount} {vault.custodyCount === 1 ? 'transfer' : 'transfers'}
                 </Badge>
               </div>
             </div>
@@ -93,9 +95,12 @@ function VaultCard({ vault }: { vault: VaultType }) {
               align="end"
               className="w-48 border-3 border-black shadow-[8px_8px_0px_0px_rgba(26,115,232,1)] bg-white rounded-xl"
             >
-              <DropdownMenuItem className="flex items-center gap-2 font-bold uppercase text-xs hover:bg-[#1A73E8] hover:text-white cursor-pointer">
-                <FaUsersCog size={18} />
-                Verify Custodian
+              <DropdownMenuItem
+                className="flex items-center gap-2 font-bold uppercase text-xs hover:bg-[#1A73E8] hover:text-white cursor-pointer"
+                onClick={() => setOpenCustodyTrail(true)}
+              >
+                <History size={18} />
+                Custody History
               </DropdownMenuItem>
 
               <DropdownMenuItem className="flex items-center gap-2 font-bold uppercase text-xs hover:bg-[#1A73E8] hover:text-white cursor-pointer" onClick={() => setViewDetails(true)}>
@@ -184,6 +189,13 @@ function VaultCard({ vault }: { vault: VaultType }) {
         onClose={() => setViewDetails(false)}
         vault={vault}
         open={viewDetails}
+      />
+
+      <CustodyTrailModal
+        open={openCustodyTrail}
+        onClose={() => setOpenCustodyTrail(false)}
+        custodyTrail={vault.custodyTrail}
+        vaultName={vault.title}
       />
     </Card>
   );
